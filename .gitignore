@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+#test log files
+elevator_log.jsonl
+
 # C extensions
 *.so
 

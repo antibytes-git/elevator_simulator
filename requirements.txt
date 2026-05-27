@@ -1,0 +1,5 @@
+# Minimal runtime requirements (stdlib-only project)
+# Dev/test tools
+black
+ruff
+pytest
