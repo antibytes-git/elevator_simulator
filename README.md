@@ -4,6 +4,15 @@ Enterprise-focused, configurable destination-dispatch elevator simulator.
 
 This repository implements a discrete-time simulator where passengers supply origin and destination up-front and are immediately assigned an elevator (destination dispatch). 
 
+- Models are implemented with `dataclasses` for clearer state and typing.
+- Scheduler estimates ETA including onboard drop-offs so full elevators are still considered in assignment decisions (reduces starvation risk).
+- Multiple elevator banks are supported via configurable `--num-elevators`, allowing the simulator to dispatch requests across a fleet rather than a single car.
+- Tie-breaker heuristics prefer less-loaded elevators when cost estimates are equal, which prevents one elevator from monopolizing same-floor requests and improves multi-elevator utilization.
+- Structured JSONL logging via Python `logging` for traceability and downstream analysis.
+- CLI for configurable runs and log path override.
+- Basic request validation to drop malformed rows.
+- Expanded regression tests for same-floor waiting and multi-elevator capacity scenarios.
+
 ## Quickstart
 
 1. Create a virtual environment and install dev dependencies (optional):
@@ -22,16 +31,6 @@ python main.py --input data/requests.csv --num-elevators 3 --num-floors 10 --max
 
 3. The simulator writes a structured JSONL trace to the log file and prints summary statistics to stdout.
 
-## Notable Improvements
-
-- Models are implemented with `dataclasses` for clearer state and typing.
-- Scheduler estimates ETA including onboard drop-offs so full elevators are still considered in assignment decisions (reduces starvation risk).
-- Multiple elevator banks are supported via configurable `--num-elevators`, allowing the simulator to dispatch requests across a fleet rather than a single car.
-- Tie-breaker heuristics prefer less-loaded elevators when cost estimates are equal, which prevents one elevator from monopolizing same-floor requests and improves multi-elevator utilization.
-- Structured JSONL logging via Python `logging` for traceability and downstream analysis.
-- CLI for configurable runs and log path override.
-- Basic request validation to drop malformed rows.
-- Expanded regression tests for same-floor waiting and multi-elevator capacity scenarios.
 
 ## Testing
 
