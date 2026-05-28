@@ -4,12 +4,28 @@ from src.models import Request, Passenger, Elevator, Direction
 
 
 class Scheduler:
-    def __init__(self, elevators: List[Elevator], max_capacity: int, num_floors: int = 10):
+    def __init__(self, elevators: List[Elevator], max_capacity: int, num_floors: int = 10, strategy: str = "eta"):
+        """Initialize scheduler with specified strategy.
+        
+        Args:
+            elevators: List of Elevator objects
+            max_capacity: Maximum capacity per elevator
+            num_floors: Total number of floors
+            strategy: Scheduling algorithm - "eta" (smart) or "scan" (simple sweep)
+        """
         self.elevators = elevators
         self.max_capacity = max_capacity
         self.num_floors = num_floors
+        self.strategy = strategy
 
     def assign_request(self, request: Request, current_time: int) -> Passenger:
+        """Assign a passenger to an elevator using the configured strategy."""
+        if self.strategy == "scan":
+            return self._assign_request_scan(request, current_time)
+        else:  # default to "eta"
+            return self._assign_request_eta(request, current_time)
+
+    def _assign_request_eta(self, request: Request, current_time: int) -> Passenger:
         """Assign a passenger to the elevator with the minimum estimated cost.
 
         This uses an ETA estimator that accounts for current target stops and
@@ -29,6 +45,37 @@ class Scheduler:
                 best_elevator = elevator
 
         # always assign (destination-dispatch constraint)
+        passenger = Passenger(request.passenger_id, request.origin, request.destination, current_time)
+        passenger.assigned_elevator = best_elevator.id
+
+        self._insert_target_floors(best_elevator, request.origin)
+
+        return passenger
+
+    def _assign_request_scan(self, request: Request, current_time: int) -> Passenger:
+        """Assign a passenger to the nearest available elevator using a simple scan strategy.
+        
+        This strategy is simpler than ETA and picks the elevator closest to the
+        passenger's origin floor, similar to the simulation_2() method in SampleCode.txt.
+        """
+        best_elevator = None
+        min_distance = float("inf")
+
+        for elevator in self.elevators:
+            distance = abs(elevator.current_floor - request.origin)
+            # also consider elevator direction preference
+            req_dir = Direction.UP if request.destination > request.origin else Direction.DOWN
+            
+            # Add penalty if elevator is moving away from request
+            if elevator.direction != Direction.IDLE and elevator.direction != req_dir:
+                distance += self.num_floors * 0.5
+
+            if distance < min_distance or (
+                distance == min_distance and self._prefer_elevator(elevator, best_elevator)
+            ):
+                min_distance = distance
+                best_elevator = elevator
+
         passenger = Passenger(request.passenger_id, request.origin, request.destination, current_time)
         passenger.assigned_elevator = best_elevator.id
 

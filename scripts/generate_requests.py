@@ -10,16 +10,25 @@ OUTPUT_FILE = 'data/requests_large.csv'
 def generate_requests():
     """Generates a list of random elevator requests."""
     requests = []
+
+    # Example: Lobby-heavy traffic profile (weight floor 0 much higher)
+    floor_weights = [10] + [1] * (NUM_FLOORS - 1)
+    floors = list(range(NUM_FLOORS))
+    
+    current_time = 0
     for i in range(1, NUM_REQUESTS + 1):
-        origin = random.randint(0, NUM_FLOORS - 1)
-        destination = random.randint(0, NUM_FLOORS - 1)
+        # Exponential distribution for realistic passenger arrival intervals (e.g., avg 5 ticks apart)
+        current_time += int(random.expovariate(1.0 / 5.0))
+
+        origin = random.choices(floors, weights=floor_weights, k=1)[0]
+        destination = random.choices(floors, weights=floor_weights, k=1)[0]
 
         # Ensure origin and destination are not the same
         while origin == destination:
-            destination = random.randint(0, NUM_FLOORS - 1)
+            destination = random.choices(floors, weights=floor_weights, k=1)[0]
 
         request = {
-            'time_step': random.randint(0, MAX_TIME_STEP),
+            'time_step': current_time,
             'passenger_id': i,
             'origin': origin,
             'destination': destination
